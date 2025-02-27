@@ -23,6 +23,12 @@ func main() {
 		log.Println("warning: PORT environment variable is not set")
 	}
 
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Println("warning: DATABASE_URL environment variable is not set")
+		log.Println("Running without CRUD endpoints")
+	}
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
