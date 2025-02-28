@@ -7,9 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/STaninnat/booking-backend/handler"
+	"github.com/STaninnat/booking-backend/handlers"
 	"github.com/STaninnat/booking-backend/internal/config"
 	"github.com/STaninnat/booking-backend/internal/database"
+	"github.com/STaninnat/booking-backend/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -59,11 +60,8 @@ func main() {
 
 		dbQueries := database.New(db)
 		apicfg.DB = dbQueries
+		apicfg.DBConn = db
 		log.Println("Connected to database successfully!")
-	}
-
-	apiConfigWrapper := &handler.ApiConfigWrapper{
-		ApiConfig: &apicfg,
 	}
 
 	router := chi.NewRouter()
@@ -82,10 +80,13 @@ func main() {
 
 	v1Router := chi.NewRouter()
 	if apicfg.DB != nil {
-		v1Router.Get("/healthz", handler.HandlerReadiness)
-		v1Router.Get("/error", handler.HandlerError)
+		v1Router.Get("/healthz", handlers.HandlerReadiness)
+		v1Router.Get("/error", handlers.HandlerError)
 
-		v1Router.Post("/user", apiConfigWrapper.HandlerCreateUser)
+		v1Router.Post("/user/signup", handlers.HandlerCreateUser(&apicfg))
+		v1Router.Post("/user/signin", handlers.HandlerSignin(&apicfg))
+		v1Router.Post("/user/signout", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerSignout))
+		v1Router.Post("/user/refresh-key", handlers.HandlerRefreshKey(&apicfg))
 	}
 
 	router.Mount("/v1", v1Router)
