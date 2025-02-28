@@ -4,7 +4,9 @@ CREATE TABLE
         id TEXT PRIMARY KEY,
         created_at TIMESTAMP  NOT NULL,
         updated_at TIMESTAMP  NOT NULL,
-        name TEXT NOT NULL,
+        full_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        username TEXT NOT NULL,
         password TEXT NOT NULL,
         api_key TEXT UNIQUE NOT NULL,
         api_key_expires_at TIMESTAMP  NOT NULL

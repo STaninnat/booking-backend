@@ -1,6 +1,6 @@
 -- name: CreateUser :exec
-INSERT INTO users (id, created_at, updated_at, name, password, api_key, api_key_expires_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO users (id, created_at, updated_at, full_name, last_name, username, password, api_key, api_key_expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 --
 
 -- name: GetUser :one
@@ -8,7 +8,7 @@ SELECT * FROM users WHERE api_key = $1;
 --
 
 -- name: GetUserByName :one
-SELECT * FROM users WHERE name = $1;
+SELECT * FROM users WHERE username = $1;
 --
 
 -- name: GetUserByID :one
