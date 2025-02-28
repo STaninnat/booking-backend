@@ -6,16 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/STaninnat/booking-backend/internal/config"
 	"github.com/STaninnat/booking-backend/internal/database"
 	"github.com/STaninnat/booking-backend/security"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type ApiConfigWrapper struct {
-	*config.ApiConfig
-}
 
 func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
