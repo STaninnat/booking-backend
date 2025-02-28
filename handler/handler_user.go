@@ -67,12 +67,12 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 		return
 	}
 
-	apiKeyExpiresAt := time.Now().UTC().Add(30 * 24 * time.Hour)
+	apiKeyExpiresAt := time.Now().Local().Add(30 * 24 * time.Hour)
 
 	err = apicfg.DB.CreateUser(r.Context(), database.CreateUserParams{
 		ID:              uuid.New().String(),
-		CreatedAt:       time.Now().UTC(),
-		UpdatedAt:       time.Now().UTC(),
+		CreatedAt:       time.Now().Local(),
+		UpdatedAt:       time.Now().Local(),
 		FullName:        params.FullName,
 		LastName:        params.LastName,
 		Username:        params.UserName,
@@ -86,7 +86,7 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 		return
 	}
 
-	jwtExpiresAt := time.Now().UTC().Add(15 * time.Minute)
+	jwtExpiresAt := time.Now().Local().Add(15 * time.Minute)
 
 	user, err := apicfg.DB.GetUser(r.Context(), hashedApiKey)
 	if err != nil {
@@ -108,7 +108,7 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 		return
 	}
 
-	refreshExpiresAt := time.Now().UTC().Add(30 * 24 * time.Hour)
+	refreshExpiresAt := time.Now().Local().Add(30 * 24 * time.Hour)
 	refreshToken, err := security.GenerateJWTToken(userID, apicfg.RefreshSecret, refreshExpiresAt)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "couldn't generate refresh token")
@@ -117,8 +117,8 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 
 	err = apicfg.DB.CreateUserRfKey(r.Context(), database.CreateUserRfKeyParams{
 		ID:                    uuid.New().String(),
-		CreatedAt:             time.Now().UTC(),
-		UpdatedAt:             time.Now().UTC(),
+		CreatedAt:             time.Now().Local(),
+		UpdatedAt:             time.Now().Local(),
 		AccessTokenExpiresAt:  jwtExpiresAt,
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: refreshExpiresAt,
