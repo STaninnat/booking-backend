@@ -13,18 +13,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
 type ApiConfigWrapper struct {
 	*config.ApiConfig
 }
 
 func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Name     string `json:"name"`
+		FullName string `json:"fullname"`
+		LastName string `json:"lastname"`
+		UserName string `json:"username"`
 		Password string `json:"password"`
 	}
 
@@ -37,17 +34,17 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 		return
 	}
 
-	if params.Name == "" || params.Password == "" {
+	if params.UserName == "" || params.Password == "" {
 		respondWithError(w, http.StatusBadRequest, "invalid input")
 		return
 	}
 
-	if !security.IsValidUserName(params.Name) {
+	if !security.IsValidUserName(params.UserName) {
 		respondWithError(w, http.StatusBadRequest, "invalid username format")
 		return
 	}
 
-	_, err = apicfg.DB.GetUserByName(r.Context(), params.Name)
+	_, err = apicfg.DB.GetUserByName(r.Context(), params.UserName)
 	if err == nil {
 		respondWithError(w, http.StatusBadRequest, "username already exists")
 		return
@@ -76,13 +73,15 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 		ID:              uuid.New().String(),
 		CreatedAt:       time.Now().UTC(),
 		UpdatedAt:       time.Now().UTC(),
-		Name:            params.Name,
+		FullName:        params.FullName,
+		LastName:        params.LastName,
+		Username:        params.UserName,
 		Password:        string(hashedPassword),
 		ApiKey:          hashedApiKey,
 		ApiKeyExpiresAt: apiKeyExpiresAt,
 	})
 	if err != nil {
-		log.Printf("Error while creating user: %v", err)
+		log.Printf("error while creating user: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "couldn't create user")
 		return
 	}
@@ -91,14 +90,14 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 
 	user, err := apicfg.DB.GetUser(r.Context(), hashedApiKey)
 	if err != nil {
-		log.Printf("Error while getting user: %v", err)
+		log.Printf("error while getting user: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "couldn't get user")
 		return
 	}
 
 	userID, err := uuid.Parse(user.ID)
 	if err != nil {
-		log.Printf("Error parsing user ID: %v", err)
+		log.Printf("error parsing user ID: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "invalid user ID")
 		return
 	}
