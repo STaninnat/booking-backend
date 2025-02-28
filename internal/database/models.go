@@ -12,7 +12,9 @@ type User struct {
 	ID              string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	Name            string
+	FullName        string
+	LastName        string
+	Username        string
 	Password        string
 	ApiKey          string
 	ApiKeyExpiresAt time.Time
