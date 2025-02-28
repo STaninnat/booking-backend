@@ -6,16 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/STaninnat/booking-backend/internal/config"
 	"github.com/STaninnat/booking-backend/internal/database"
 	"github.com/STaninnat/booking-backend/security"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type ApiConfigWrapper struct {
-	*config.ApiConfig
-}
 
 func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
@@ -28,8 +23,7 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 	defer r.Body.Close()
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
+	if err := decoder.Decode(&params); err != nil {
 		respondWithError(w, http.StatusBadRequest, "couldn't decode parameters")
 		return
 	}
@@ -44,7 +38,7 @@ func (apicfg *ApiConfigWrapper) HandlerCreateUser(w http.ResponseWriter, r *http
 		return
 	}
 
-	_, err = apicfg.DB.GetUserByName(r.Context(), params.UserName)
+	_, err := apicfg.DB.GetUserByName(r.Context(), params.UserName)
 	if err == nil {
 		respondWithError(w, http.StatusBadRequest, "username already exists")
 		return
