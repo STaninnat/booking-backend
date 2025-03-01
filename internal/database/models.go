@@ -5,22 +5,44 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 )
+
+type Booking struct {
+	ID        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	CheckIn   time.Time
+	CheckOut  time.Time
+	UserID    string
+	RoomID    string
+}
+
+type Room struct {
+	ID          string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	RoomName    string
+	Description sql.NullString
+	Price       string
+	MaxGuests   int32
+}
 
 type User struct {
 	ID              string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	FullName        string
-	LastName        string
+	Email           string
+	Phone           sql.NullString
 	Username        string
 	Password        string
 	ApiKey          string
 	ApiKeyExpiresAt time.Time
 }
 
-type UsersKey struct {
+type UsersToken struct {
 	ID                    string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time

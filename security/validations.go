@@ -11,12 +11,20 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func IsValidUserName(name string) bool {
-	var usernameRegex = `^[a-zA-Z0-9]+([-._]?[a-zA-Z0-9]+)*$`
+func IsValidUserNameFormat(name string) bool {
+	usernameRegex := `^[a-zA-Z0-9]+([-._]?[a-zA-Z0-9]+)*$`
 
 	re := regexp.MustCompile(usernameRegex)
 
 	return len(name) >= 3 && len(name) <= 30 && re.MatchString(name)
+}
+
+func IsValidateEmailFormat(email string) bool {
+	emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+
+	re := regexp.MustCompile(emailRegex)
+
+	return re.MatchString(email)
 }
 
 func ValidateJWTToken(tokenString string, secret string) (*Claims, error) {

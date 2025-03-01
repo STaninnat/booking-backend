@@ -11,7 +11,7 @@ import (
 )
 
 const createUserRfKey = `-- name: CreateUserRfKey :exec
-INSERT INTO users_key (id, created_at, updated_at ,access_token_expires_at, refresh_token, refresh_token_expires_at, user_id)
+INSERT INTO users_token (id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
@@ -40,13 +40,13 @@ func (q *Queries) CreateUserRfKey(ctx context.Context, arg CreateUserRfKeyParams
 
 const getRfKeyByUserID = `-- name: GetRfKeyByUserID :one
 
-SELECT id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id FROM users_key WHERE user_id = $1
+SELECT id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id FROM users_token WHERE user_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetRfKeyByUserID(ctx context.Context, userID string) (UsersKey, error) {
+func (q *Queries) GetRfKeyByUserID(ctx context.Context, userID string) (UsersToken, error) {
 	row := q.db.QueryRowContext(ctx, getRfKeyByUserID, userID)
-	var i UsersKey
+	var i UsersToken
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
@@ -61,13 +61,13 @@ func (q *Queries) GetRfKeyByUserID(ctx context.Context, userID string) (UsersKey
 
 const getUserByRfKey = `-- name: GetUserByRfKey :one
 
-SELECT id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id FROM users_key WHERE refresh_token = $1 
+SELECT id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id FROM users_token WHERE refresh_token = $1 
 LIMIT 1
 `
 
-func (q *Queries) GetUserByRfKey(ctx context.Context, refreshToken string) (UsersKey, error) {
+func (q *Queries) GetUserByRfKey(ctx context.Context, refreshToken string) (UsersToken, error) {
 	row := q.db.QueryRowContext(ctx, getUserByRfKey, refreshToken)
-	var i UsersKey
+	var i UsersToken
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
@@ -80,14 +80,14 @@ func (q *Queries) GetUserByRfKey(ctx context.Context, refreshToken string) (User
 	return i, err
 }
 
-const updateUserRfKey = `-- name: UpdateUserRfKey :exec
+const updateUserToken = `-- name: UpdateUserToken :exec
 
-UPDATE users_key
+UPDATE users_token
 SET updated_at = $1, access_token_expires_at = $2, refresh_token = $3, refresh_token_expires_at = $4
 WHERE user_id = $5
 `
 
-type UpdateUserRfKeyParams struct {
+type UpdateUserTokenParams struct {
 	UpdatedAt             time.Time
 	AccessTokenExpiresAt  time.Time
 	RefreshToken          string
@@ -95,8 +95,8 @@ type UpdateUserRfKeyParams struct {
 	UserID                string
 }
 
-func (q *Queries) UpdateUserRfKey(ctx context.Context, arg UpdateUserRfKeyParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserRfKey,
+func (q *Queries) UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserToken,
 		arg.UpdatedAt,
 		arg.AccessTokenExpiresAt,
 		arg.RefreshToken,

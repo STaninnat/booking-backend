@@ -14,7 +14,7 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 	newKeyExpiredAt := time.Now().Local().AddDate(-1, 0, 0)
 	newTokenExpired := "expired-" + uuid.New().String()[:28]
 
-	if err := cfg.DB.UpdateUser(r.Context(), database.UpdateUserParams{
+	if err := cfg.DB.UpdateUserKey(r.Context(), database.UpdateUserKeyParams{
 		UpdatedAt:       time.Now().Local(),
 		ApiKey:          newTokenExpired,
 		ApiKeyExpiresAt: newKeyExpiredAt,
@@ -24,7 +24,7 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := cfg.DB.UpdateUserRfKey(r.Context(), database.UpdateUserRfKeyParams{
+	if err := cfg.DB.UpdateUserToken(r.Context(), database.UpdateUserTokenParams{
 		UpdatedAt:             time.Now().Local(),
 		AccessTokenExpiresAt:  newKeyExpiredAt,
 		RefreshToken:          newTokenExpired,

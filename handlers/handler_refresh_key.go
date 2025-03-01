@@ -49,7 +49,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 			return
 		}
 
-		err = cfg.DB.UpdateUser(r.Context(), database.UpdateUserParams{
+		err = cfg.DB.UpdateUserKey(r.Context(), database.UpdateUserKeyParams{
 			UpdatedAt:       time.Now().Local(),
 			ApiKey:          newHashedApiKey,
 			ApiKeyExpiresAt: newApiKeyExpiresAt,
@@ -61,7 +61,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 		}
 
 		newRefreshTokenExpiresAt := time.Now().Local().Add(30 * 24 * time.Hour)
-		err = cfg.DB.UpdateUserRfKey(r.Context(), database.UpdateUserRfKeyParams{
+		err = cfg.DB.UpdateUserToken(r.Context(), database.UpdateUserTokenParams{
 			UpdatedAt:             time.Now().Local(),
 			AccessTokenExpiresAt:  newAccessTokenExpiresAt,
 			RefreshToken:          refreshToken,

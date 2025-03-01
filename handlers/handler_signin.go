@@ -30,7 +30,7 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			return
 		}
 
-		user, err := cfg.DB.GetUserByName(r.Context(), params.UserName)
+		user, err := cfg.DB.GetUserByUsername(r.Context(), params.UserName)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				middlewares.RespondWithError(w, http.StatusBadRequest, "username not found")
@@ -102,7 +102,7 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 
 		keyExpiresAt := time.Now().Local().Add(30 * 24 * time.Hour)
 
-		err = queriesTx.UpdateUser(r.Context(), database.UpdateUserParams{
+		err = queriesTx.UpdateUserKey(r.Context(), database.UpdateUserKeyParams{
 			UpdatedAt:       time.Now().Local(),
 			ApiKey:          hashedApiKey,
 			ApiKeyExpiresAt: keyExpiresAt,
@@ -119,7 +119,7 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			return
 		}
 
-		err = queriesTx.UpdateUserRfKey(r.Context(), database.UpdateUserRfKeyParams{
+		err = queriesTx.UpdateUserToken(r.Context(), database.UpdateUserTokenParams{
 			UpdatedAt:             time.Now().Local(),
 			AccessTokenExpiresAt:  jwtExpiresAt,
 			RefreshToken:          refreshToken,
