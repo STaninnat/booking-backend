@@ -1,6 +1,7 @@
 package security
 
 import (
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -56,9 +57,11 @@ func TestIsValidateEmailFormat(t *testing.T) {
 }
 
 func TestValidateJWTToken(t *testing.T) {
-	err := godotenv.Load("../.env.development")
-	if err != nil {
-		t.Fatalf("error loading .env file")
+	if os.Getenv("CI") == "" {
+		err := godotenv.Load("../.env.test")
+		if err != nil {
+			log.Fatal("Error loading .env.test file")
+		}
 	}
 
 	// Retrieve values from .env
