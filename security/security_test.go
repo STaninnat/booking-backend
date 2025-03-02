@@ -1,11 +1,13 @@
 package security
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -54,14 +56,23 @@ func TestIsValidateEmailFormat(t *testing.T) {
 }
 
 func TestValidateJWTToken(t *testing.T) {
+	err := godotenv.Load("../.env.development")
+	if err != nil {
+		t.Fatalf("error loading .env file")
+	}
+
+	// Retrieve values from .env
+	apiServiceName := os.Getenv("API_SERVICE_NAME")
+	frontendAppName := os.Getenv("FRONTEND_APP_NAME")
+
 	secret := "mysecret"
 	expirationTime := time.Now().Add(1 * time.Hour)
 	userID := uuid.New()
 	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "my-api-service",
-			Audience:  []string{"my-frontend-app"},
+			Issuer:    apiServiceName,
+			Audience:  []string{frontendAppName},
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
@@ -85,8 +96,8 @@ func TestValidateJWTToken(t *testing.T) {
 	expiredClaims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "my-api-service",
-			Audience:  []string{"my-frontend-app"},
+			Issuer:    apiServiceName,
+			Audience:  []string{frontendAppName},
 			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
 			NotBefore: jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-1 * time.Hour)),
