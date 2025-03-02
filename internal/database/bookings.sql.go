@@ -11,7 +11,6 @@ import (
 )
 
 const checkRoomAvailability = `-- name: CheckRoomAvailability :one
-
 SELECT id FROM bookings
 WHERE room_id = $1
 AND (
@@ -74,7 +73,6 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 }
 
 const deleteBooking = `-- name: DeleteBooking :exec
-
 DELETE FROM bookings
 WHERE id = $1
 `
@@ -84,8 +82,41 @@ func (q *Queries) DeleteBooking(ctx context.Context, id string) error {
 	return err
 }
 
-const getBookingsByRoomID = `-- name: GetBookingsByRoomID :many
+const getBookedDatesByRoomID = `-- name: GetBookedDatesByRoomID :many
+SELECT check_in, check_out
+FROM bookings
+WHERE room_id = $1
+`
 
+type GetBookedDatesByRoomIDRow struct {
+	CheckIn  time.Time
+	CheckOut time.Time
+}
+
+func (q *Queries) GetBookedDatesByRoomID(ctx context.Context, roomID string) ([]GetBookedDatesByRoomIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getBookedDatesByRoomID, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetBookedDatesByRoomIDRow
+	for rows.Next() {
+		var i GetBookedDatesByRoomIDRow
+		if err := rows.Scan(&i.CheckIn, &i.CheckOut); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getBookingsByRoomID = `-- name: GetBookingsByRoomID :many
 SELECT b.id, b.updated_at, b.check_in, b.check_out, b.user_id, u.email AS user_email
 FROM bookings b
 JOIN users u ON b.user_id = u.id
@@ -132,7 +163,6 @@ func (q *Queries) GetBookingsByRoomID(ctx context.Context, roomID string) ([]Get
 }
 
 const getBookingsByUserID = `-- name: GetBookingsByUserID :many
-
 SELECT b.id, b.updated_at, b.check_in, b.check_out, b.user_id, b.room_id, r.room_name
 FROM bookings b
 JOIN rooms r ON b.room_id = r.id
