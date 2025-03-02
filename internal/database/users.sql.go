@@ -132,12 +132,12 @@ func (q *Queries) GetUserByKey(ctx context.Context, apiKey string) (User, error)
 const getUserByUsername = `-- name: GetUserByUsername :one
 
 SELECT id, created_at, updated_at, full_name, email, phone, username, password, api_key, api_key_expires_at FROM users 
-WHERE api_key = $1
+WHERE username = $1
 LIMIT 1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, apiKey string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, apiKey)
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,

@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-const createRoom = `-- name: CreateRoom :exec
+const createRoom = `-- name: CreateRoom :one
 INSERT INTO rooms (id, created_at, updated_at, room_name, description, price, max_guests)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id
+RETURNING id, created_at, updated_at, room_name, description, price, max_guests
 `
 
 type CreateRoomParams struct {
@@ -27,8 +27,8 @@ type CreateRoomParams struct {
 	MaxGuests   int32
 }
 
-func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
-	_, err := q.db.ExecContext(ctx, createRoom,
+func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
+	row := q.db.QueryRowContext(ctx, createRoom,
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -37,10 +37,20 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) error {
 		arg.Price,
 		arg.MaxGuests,
 	)
-	return err
+	var i Room
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RoomName,
+		&i.Description,
+		&i.Price,
+		&i.MaxGuests,
+	)
+	return i, err
 }
 
-const getAllRooms = `-- name: GetAllRooms :one
+const getAllRooms = `-- name: GetAllRooms :many
 
 SELECT id, updated_at, room_name, description, price, max_guests
 FROM rooms
@@ -55,18 +65,34 @@ type GetAllRoomsRow struct {
 	MaxGuests   int32
 }
 
-func (q *Queries) GetAllRooms(ctx context.Context) (GetAllRoomsRow, error) {
-	row := q.db.QueryRowContext(ctx, getAllRooms)
-	var i GetAllRoomsRow
-	err := row.Scan(
-		&i.ID,
-		&i.UpdatedAt,
-		&i.RoomName,
-		&i.Description,
-		&i.Price,
-		&i.MaxGuests,
-	)
-	return i, err
+func (q *Queries) GetAllRooms(ctx context.Context) ([]GetAllRoomsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllRooms)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllRoomsRow
+	for rows.Next() {
+		var i GetAllRoomsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UpdatedAt,
+			&i.RoomName,
+			&i.Description,
+			&i.Price,
+			&i.MaxGuests,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getRoomByID = `-- name: GetRoomByID :one

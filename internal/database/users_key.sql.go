@@ -80,14 +80,14 @@ func (q *Queries) GetUserByRfKey(ctx context.Context, refreshToken string) (User
 	return i, err
 }
 
-const updateUserToken = `-- name: UpdateUserToken :exec
+const updateUserTK = `-- name: UpdateUserTK :exec
 
 UPDATE users_token
 SET updated_at = $1, access_token_expires_at = $2, refresh_token = $3, refresh_token_expires_at = $4
 WHERE user_id = $5
 `
 
-type UpdateUserTokenParams struct {
+type UpdateUserTKParams struct {
 	UpdatedAt             time.Time
 	AccessTokenExpiresAt  time.Time
 	RefreshToken          string
@@ -95,8 +95,8 @@ type UpdateUserTokenParams struct {
 	UserID                string
 }
 
-func (q *Queries) UpdateUserToken(ctx context.Context, arg UpdateUserTokenParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserToken,
+func (q *Queries) UpdateUserTK(ctx context.Context, arg UpdateUserTKParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserTK,
 		arg.UpdatedAt,
 		arg.AccessTokenExpiresAt,
 		arg.RefreshToken,

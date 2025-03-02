@@ -61,7 +61,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 		}
 
 		newRefreshTokenExpiresAt := time.Now().Local().Add(30 * 24 * time.Hour)
-		err = cfg.DB.UpdateUserToken(r.Context(), database.UpdateUserTokenParams{
+		err = cfg.DB.UpdateUserTK(r.Context(), database.UpdateUserTKParams{
 			UpdatedAt:             time.Now().Local(),
 			AccessTokenExpiresAt:  newAccessTokenExpiresAt,
 			RefreshToken:          refreshToken,

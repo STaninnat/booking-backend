@@ -14,8 +14,11 @@ const checkRoomAvailability = `-- name: CheckRoomAvailability :one
 
 SELECT id FROM bookings
 WHERE room_id = $1
-AND check_in < $2
-AND check_out > $3
+AND (
+    (check_in < $2 AND check_out >= $3)
+    OR (check_in >= $3 AND check_out <= $2)
+)
+LIMIT 1
 `
 
 type CheckRoomAvailabilityParams struct {
@@ -31,10 +34,10 @@ func (q *Queries) CheckRoomAvailability(ctx context.Context, arg CheckRoomAvaila
 	return id, err
 }
 
-const createBooking = `-- name: CreateBooking :exec
+const createBooking = `-- name: CreateBooking :one
 INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id
+RETURNING id, created_at, updated_at, check_in, check_out, user_id, room_id
 `
 
 type CreateBookingParams struct {
@@ -47,8 +50,8 @@ type CreateBookingParams struct {
 	RoomID    string
 }
 
-func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) error {
-	_, err := q.db.ExecContext(ctx, createBooking,
+func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
+	row := q.db.QueryRowContext(ctx, createBooking,
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -57,7 +60,17 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) er
 		arg.UserID,
 		arg.RoomID,
 	)
-	return err
+	var i Booking
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CheckIn,
+		&i.CheckOut,
+		&i.UserID,
+		&i.RoomID,
+	)
+	return i, err
 }
 
 const deleteBooking = `-- name: DeleteBooking :exec

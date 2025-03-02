@@ -1,14 +1,17 @@
--- name: CreateBooking :exec
+-- name: CreateBooking :one
 INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id;
+RETURNING *;
 --
 
 -- name: CheckRoomAvailability :one
 SELECT id FROM bookings
 WHERE room_id = $1
-AND check_in < $2
-AND check_out > $3;
+AND (
+    (check_in < $2 AND check_out >= $3)
+    OR (check_in >= $3 AND check_out <= $2)
+)
+LIMIT 1;
 --
 
 -- name: GetBookingsByUserID :many

@@ -119,7 +119,7 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			return
 		}
 
-		err = queriesTx.UpdateUserToken(r.Context(), database.UpdateUserTokenParams{
+		err = queriesTx.UpdateUserTK(r.Context(), database.UpdateUserTKParams{
 			UpdatedAt:             time.Now().Local(),
 			AccessTokenExpiresAt:  jwtExpiresAt,
 			RefreshToken:          refreshToken,

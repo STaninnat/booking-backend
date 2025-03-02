@@ -3,7 +3,7 @@ INSERT INTO users_token (id, created_at, updated_at, access_token_expires_at, re
 VALUES ($1, $2, $3, $4, $5, $6, $7);
 --
 
--- name: UpdateUserToken :exec
+-- name: UpdateUserTK :exec
 UPDATE users_token
 SET updated_at = $1, access_token_expires_at = $2, refresh_token = $3, refresh_token_expires_at = $4
 WHERE user_id = $5;

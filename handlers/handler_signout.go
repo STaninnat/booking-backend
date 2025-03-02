@@ -24,7 +24,7 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := cfg.DB.UpdateUserToken(r.Context(), database.UpdateUserTokenParams{
+	if err := cfg.DB.UpdateUserTK(r.Context(), database.UpdateUserTKParams{
 		UpdatedAt:             time.Now().Local(),
 		AccessTokenExpiresAt:  newKeyExpiredAt,
 		RefreshToken:          newTokenExpired,
