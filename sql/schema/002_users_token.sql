@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE 
-    users_key (
+    users_token (
         id TEXT PRIMARY KEY,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
@@ -11,4 +11,4 @@ CREATE TABLE
     );
 
 -- +goose Down
-DROP TABLE IF EXISTS users_key;
+DROP TABLE IF EXISTS users_token;

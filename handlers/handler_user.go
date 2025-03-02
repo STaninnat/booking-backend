@@ -17,10 +17,11 @@ import (
 func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type parameters struct {
-			FullName string `json:"fullname"`
-			LastName string `json:"lastname"`
-			UserName string `json:"username"`
-			Password string `json:"password"`
+			FirstName string `json:"firstname"`
+			LastName  string `json:"lastname"`
+			Email     string `json:"email"`
+			UserName  string `json:"username"`
+			Password  string `json:"password"`
 		}
 
 		defer r.Body.Close()
@@ -36,14 +37,42 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			return
 		}
 
-		if !security.IsValidUserName(params.UserName) {
+		if !security.IsValidUserNameFormat(params.UserName) {
 			middlewares.RespondWithError(w, http.StatusBadRequest, "invalid username format")
 			return
 		}
-
-		_, err := cfg.DB.GetUserByName(r.Context(), params.UserName)
-		if err == nil {
+		exists, err := cfg.DB.CheckUserExistsByUsername(r.Context(), params.UserName)
+		if err != nil {
+			middlewares.RespondWithError(w, http.StatusInternalServerError, "error checking username")
+			return
+		}
+		if exists {
 			middlewares.RespondWithError(w, http.StatusBadRequest, "username already exists")
+			return
+		}
+
+		if !security.IsValidateEmailFormat(params.Email) {
+			middlewares.RespondWithError(w, http.StatusBadRequest, "invalid email format")
+			return
+		}
+		exists, err = cfg.DB.CheckUserExistsByEmail(r.Context(), params.Email)
+		if err != nil {
+			middlewares.RespondWithError(w, http.StatusInternalServerError, "error checking email")
+			return
+		}
+		if exists {
+			middlewares.RespondWithError(w, http.StatusBadRequest, "an account with this email already exists")
+			return
+		}
+
+		fullName := params.FirstName + " " + params.LastName
+		exists, err = cfg.DB.CheckUserExistsByFullname(r.Context(), fullName)
+		if err != nil {
+			middlewares.RespondWithError(w, http.StatusInternalServerError, "error checking full name")
+			return
+		}
+		if exists {
+			middlewares.RespondWithError(w, http.StatusBadRequest, "an account with this name already exists")
 			return
 		}
 
@@ -70,8 +99,8 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			ID:              uuid.New().String(),
 			CreatedAt:       time.Now().Local(),
 			UpdatedAt:       time.Now().Local(),
-			FullName:        params.FullName,
-			LastName:        params.LastName,
+			FullName:        fullName,
+			Email:           params.Email,
 			Username:        params.UserName,
 			Password:        string(hashedPassword),
 			ApiKey:          hashedApiKey,
@@ -85,7 +114,7 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 
 		jwtExpiresAt := time.Now().Local().Add(15 * time.Minute)
 
-		user, err := cfg.DB.GetUser(r.Context(), hashedApiKey)
+		user, err := cfg.DB.GetUserByKey(r.Context(), hashedApiKey)
 		if err != nil {
 			log.Printf("error while getting user: %v", err)
 			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't get user")

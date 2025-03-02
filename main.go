@@ -87,6 +87,16 @@ func main() {
 		v1Router.Post("/user/signin", handlers.HandlerSignin(&apicfg))
 		v1Router.Post("/user/signout", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerSignout))
 		v1Router.Post("/user/refresh-key", handlers.HandlerRefreshKey(&apicfg))
+
+		v1Router.Post("/rooms", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerCreateRoom))
+		v1Router.Get("/rooms", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetAllRooms))
+		v1Router.Get("/rooms/{id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetRoom))
+
+		v1Router.Post("/bookings", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerCreateBooking))
+		v1Router.Get("/bookings/user/{user_id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetBookingsByUserID))
+		v1Router.Get("/bookings/room/{room_id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetBookingsByRoomID))
+		v1Router.Delete("/bookings/{id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerDeleteBooking))
+
 	}
 
 	router.Mount("/v1", v1Router)
