@@ -18,6 +18,17 @@ jobs:
         with:
           go-version: "1.23.x"
 
+      - name: Set environment variables
+        env:
+          API_SERVICE_NAME: ${{ secrets.API_SERVICE_NAME }}
+          FRONTEND_APP_NAME: ${{ secrets.FRONTEND_APP_NAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
+        run: echo "Load environment variables"
+
+      - name: Run unit tests
+        run: go test ./... -cover
+
       - name: Install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 

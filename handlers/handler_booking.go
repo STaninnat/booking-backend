@@ -90,8 +90,7 @@ func HandlerCreateBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.
 }
 
 func HandlerGetBookingsByUserID(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
-	userID := chi.URLParam(r, "user_id")
-	bookings, err := cfg.DB.GetBookingsByUserID(r.Context(), userID)
+	bookings, err := cfg.DB.GetBookingsByUserID(r.Context(), user.ID)
 	if err != nil {
 		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't get booking by user id")
 		return
@@ -107,6 +106,10 @@ func HandlerGetBookingsByUserID(cfg *config.ApiConfig, w http.ResponseWriter, r 
 
 func HandlerGetBookingsByRoomID(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
 	roomID := chi.URLParam(r, "room_id")
+	if roomID == "" {
+		middlewares.RespondWithError(w, http.StatusBadRequest, "missing room_id")
+	}
+
 	bookings, err := cfg.DB.GetBookingsByRoomID(r.Context(), roomID)
 	if err != nil {
 		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't get booking by room id")
@@ -122,8 +125,12 @@ func HandlerGetBookingsByRoomID(cfg *config.ApiConfig, w http.ResponseWriter, r 
 }
 
 func HandlerDeleteBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
-	id := chi.URLParam(r, "id")
-	err := cfg.DB.DeleteBooking(r.Context(), id)
+	booking_id := chi.URLParam(r, "id")
+	if booking_id == "" {
+		middlewares.RespondWithError(w, http.StatusBadRequest, "missing booking_id")
+	}
+
+	err := cfg.DB.DeleteBooking(r.Context(), booking_id)
 	if err != nil {
 		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't delete booking")
 		return

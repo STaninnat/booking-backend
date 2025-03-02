@@ -3,6 +3,7 @@ package security
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"time"
 
@@ -30,6 +31,9 @@ func IsValidateEmailFormat(email string) bool {
 func ValidateJWTToken(tokenString string, secret string) (*Claims, error) {
 	claims := &Claims{}
 
+	apiServiceName := os.Getenv("API_SERVICE_NAME")
+	frontendAppName := os.Getenv("FRONTEND_APP_NAME")
+
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
@@ -40,11 +44,11 @@ func ValidateJWTToken(tokenString string, secret string) (*Claims, error) {
 		return nil, errors.New("invalid token")
 	}
 
-	if claims.Issuer != "my-api-service" {
+	if claims.Issuer != apiServiceName {
 		return nil, fmt.Errorf("invalid issuer: expected 'my-api-service', got '%s'", claims.Issuer)
 	}
 
-	if !contains(claims.Audience, "my-frontend-app") {
+	if !contains(claims.Audience, frontendAppName) {
 		return nil, fmt.Errorf("invalid audience: expected 'my-frontend-app', got '%s'", claims.Audience)
 	}
 

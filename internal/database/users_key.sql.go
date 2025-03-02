@@ -39,7 +39,6 @@ func (q *Queries) CreateUserRfKey(ctx context.Context, arg CreateUserRfKeyParams
 }
 
 const getRfKeyByUserID = `-- name: GetRfKeyByUserID :one
-
 SELECT id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id FROM users_token WHERE user_id = $1
 LIMIT 1
 `
@@ -60,7 +59,6 @@ func (q *Queries) GetRfKeyByUserID(ctx context.Context, userID string) (UsersTok
 }
 
 const getUserByRfKey = `-- name: GetUserByRfKey :one
-
 SELECT id, created_at, updated_at, access_token_expires_at, refresh_token, refresh_token_expires_at, user_id FROM users_token WHERE refresh_token = $1 
 LIMIT 1
 `
@@ -81,7 +79,6 @@ func (q *Queries) GetUserByRfKey(ctx context.Context, refreshToken string) (User
 }
 
 const updateUserTK = `-- name: UpdateUserTK :exec
-
 UPDATE users_token
 SET updated_at = $1, access_token_expires_at = $2, refresh_token = $3, refresh_token_expires_at = $4
 WHERE user_id = $5

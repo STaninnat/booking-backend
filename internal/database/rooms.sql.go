@@ -51,7 +51,6 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 }
 
 const getAllRooms = `-- name: GetAllRooms :many
-
 SELECT id, updated_at, room_name, description, price, max_guests
 FROM rooms
 `
@@ -96,7 +95,6 @@ func (q *Queries) GetAllRooms(ctx context.Context) ([]GetAllRoomsRow, error) {
 }
 
 const getRoomByID = `-- name: GetRoomByID :one
-
 SELECT id, updated_at, room_name, description, price, max_guests
 FROM rooms
 WHERE id = $1
