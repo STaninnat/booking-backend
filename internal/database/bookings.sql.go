@@ -82,6 +82,48 @@ func (q *Queries) DeleteBooking(ctx context.Context, id string) error {
 	return err
 }
 
+const getAllBookings = `-- name: GetAllBookings :many
+SELECT b.id, b.check_in, b.check_out, r.room_name
+FROM bookings b
+JOIN rooms r ON b.room_id = r.id
+ORDER BY b.check_in ASC
+`
+
+type GetAllBookingsRow struct {
+	ID       string
+	CheckIn  time.Time
+	CheckOut time.Time
+	RoomName string
+}
+
+func (q *Queries) GetAllBookings(ctx context.Context) ([]GetAllBookingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBookings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllBookingsRow
+	for rows.Next() {
+		var i GetAllBookingsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CheckIn,
+			&i.CheckOut,
+			&i.RoomName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getBookedDatesByRoomID = `-- name: GetBookedDatesByRoomID :many
 SELECT check_in, check_out
 FROM bookings

@@ -11,5 +11,5 @@ func HandlerReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerError(w http.ResponseWriter, r *http.Request) {
-	middlewares.RespondWithError(w, http.StatusInternalServerError, "internal server error")
+	middlewares.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 }

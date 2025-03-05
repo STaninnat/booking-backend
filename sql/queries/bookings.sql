@@ -12,6 +12,12 @@ AND (
 )
 LIMIT 1;
 
+-- name: GetAllBookings :many
+SELECT b.id, b.check_in, b.check_out, r.room_name
+FROM bookings b
+JOIN rooms r ON b.room_id = r.id
+ORDER BY b.check_in ASC;
+
 -- name: GetBookingsByUserID :many
 SELECT b.id, b.updated_at, b.check_in, b.check_out, b.user_id, b.room_id, r.room_name
 FROM bookings b

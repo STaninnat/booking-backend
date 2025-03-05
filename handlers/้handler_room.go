@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"time"
@@ -38,7 +39,7 @@ func HandlerCreateRoom(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Req
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	if err := decoder.Decode(&params); err != nil {
-		middlewares.RespondWithError(w, http.StatusBadRequest, "couldn't decode json")
+		log.Println("Decode error: ", err)
 		return
 	}
 
@@ -61,57 +62,44 @@ func HandlerCreateRoom(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Req
 		MaxGuests:   int32(params.MaxGuests),
 	})
 	if err != nil {
-		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't create room")
+		middlewares.RespondWithError(w, http.StatusInternalServerError, "Couldn't create room")
 		return
 	}
 
-	userResp := map[string]any{
-		"message": "Room created successfully",
-		"room":    models.DBRoomToRoom(room_db),
-	}
-
-	middlewares.RespondWithJSON(w, http.StatusCreated, userResp)
+	middlewares.RespondWithJSON(w, http.StatusCreated, models.DBRoomToRoom(room_db))
 }
 
-func HandlerGetAllRooms(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
-	rooms, err := cfg.DB.GetAllRooms(r.Context())
-	if err != nil {
-		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't get all rooms")
-		return
-	}
+func HandlerGetAllRooms(cfg *config.ApiConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rooms, err := cfg.DB.GetAllRooms(r.Context())
+		if err != nil {
+			log.Println("Couldn't get all rooms error: ", err)
+			return
+		}
 
-	userResp := map[string]any{
-		"message": "Got all rooms successfully",
-		"rooms":   rooms,
+		middlewares.RespondWithJSON(w, http.StatusOK, rooms)
 	}
-
-	middlewares.RespondWithJSON(w, http.StatusOK, userResp)
 }
 
 func HandlerGetRoom(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
 	roomID := chi.URLParam(r, "id")
 	if roomID == "" {
-		middlewares.RespondWithError(w, http.StatusBadRequest, "missing room_id")
+		log.Println("Missing room id")
 	}
 
 	room, err := cfg.DB.GetRoomByID(r.Context(), roomID)
 	if err != nil {
-		middlewares.RespondWithError(w, http.StatusNotFound, "couldn't find room")
+		middlewares.RespondWithError(w, http.StatusNotFound, "Couldn't find room")
 		return
 	}
 
-	userResp := map[string]any{
-		"message": "Room was found",
-		"rooms":   room,
-	}
-
-	middlewares.RespondWithJSON(w, http.StatusOK, userResp)
+	middlewares.RespondWithJSON(w, http.StatusOK, room)
 }
 
 func HandlerGetRoomCalendar(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
 	roomID := chi.URLParam(r, "room_id")
 	if roomID == "" {
-		middlewares.RespondWithError(w, http.StatusBadRequest, "missing room_id")
+		log.Println("Missing room id")
 	}
 
 	bookings, err := cfg.DB.GetBookedDatesByRoomID(r.Context(), roomID)
@@ -120,7 +108,7 @@ func HandlerGetRoomCalendar(cfg *config.ApiConfig, w http.ResponseWriter, r *htt
 			middlewares.RespondWithJSON(w, http.StatusOK, CalendarResponse{RoomID: roomID, BookedDates: []string{}})
 			return
 		}
-		middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to get booking")
+		log.Println("Failed to get booking error: ")
 		return
 	}
 

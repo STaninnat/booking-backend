@@ -96,7 +96,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 		})
 
 		userResp := map[string]string{
-			"message": "token refreshed successfully",
+			"message": "Token refreshed successfully",
 		}
 
 		middlewares.RespondWithJSON(w, http.StatusOK, userResp)

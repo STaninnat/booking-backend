@@ -21,7 +21,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(".env.development"); err != nil {
-		log.Printf("warning: assuming default configuration. '.env.development' unreadable: %v", err)
+		log.Printf("warning: assuming default configuration. '.env.development' unreadable: %v\n", err)
 	}
 
 	port := os.Getenv("PORT")
@@ -31,12 +31,12 @@ func main() {
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		log.Fatal("warning: JWT_SECRET environment variable is not set")
+		log.Println("warning: JWT_SECRET environment variable is not set")
 	}
 
 	refreshSecret := os.Getenv("REFRESH_SECRET")
 	if refreshSecret == "" {
-		log.Fatal("warning: REFRESH_SECRET environment variable is not set")
+		log.Println("warning: REFRESH_SECRET environment variable is not set")
 	}
 
 	apicfg := config.ApiConfig{
@@ -51,11 +51,11 @@ func main() {
 	} else {
 		db, err := sql.Open("postgres", dbURL)
 		if err != nil {
-			log.Fatalf("warning: can't connect to database: %v", err)
+			log.Fatalf("warning: can't connect to database: %v\n", err)
 		}
 
 		if err := db.Ping(); err != nil {
-			log.Fatalf("failed to ping database: %v", err)
+			log.Fatalf("failed to ping database: %v\n", err)
 		}
 
 		dbQueries := database.New(db)
@@ -89,11 +89,12 @@ func main() {
 		v1Router.Post("/user/refresh-key", handlers.HandlerRefreshKey(&apicfg))
 
 		v1Router.Post("/rooms", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerCreateRoom))
-		v1Router.Get("/rooms", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetAllRooms))
+		v1Router.Get("/rooms", handlers.HandlerGetAllRooms(&apicfg))
 		v1Router.Get("/rooms/{id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetRoom))
 		v1Router.Get("/rooms/{room_id}/calendar", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetRoomCalendar))
 
 		v1Router.Post("/bookings", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerCreateBooking))
+		v1Router.Get("/bookings", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetAllBookings))
 		v1Router.Get("/bookings/user/{user_id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetBookingsByUserID))
 		v1Router.Get("/bookings/room/{room_id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetBookingsByRoomID))
 		v1Router.Delete("/bookings/{id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerDeleteBooking))
@@ -110,6 +111,6 @@ func main() {
 
 	log.Printf("Serving on port: %s\n", port)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server failed: %v", err)
+		log.Fatalf("server failed: %v\n", err)
 	}
 }

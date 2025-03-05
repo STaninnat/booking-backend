@@ -53,6 +53,7 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 const getAllRooms = `-- name: GetAllRooms :many
 SELECT id, updated_at, room_name, description, price, max_guests
 FROM rooms
+ORDER BY updated_at DESC
 `
 
 type GetAllRoomsRow struct {

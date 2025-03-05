@@ -17,7 +17,7 @@ func MiddlewareAuth(cfg *config.ApiConfig, handler authhandler) http.HandlerFunc
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString, err := r.Cookie("access_token")
 		if err != nil {
-			RespondWithError(w, http.StatusUnauthorized, "couldn't find token")
+			log.Println("Couldn't find token error: ", err)
 			return
 		}
 
@@ -25,7 +25,7 @@ func MiddlewareAuth(cfg *config.ApiConfig, handler authhandler) http.HandlerFunc
 		if err != nil {
 			log.Printf("token validation error: %v\n", err)
 			if err == jwt.ErrTokenExpired {
-				RespondWithError(w, http.StatusUnauthorized, "token expired")
+				log.Println("Token expired error: ", err)
 				return
 			}
 
@@ -35,12 +35,12 @@ func MiddlewareAuth(cfg *config.ApiConfig, handler authhandler) http.HandlerFunc
 
 		user, err := cfg.DB.GetUserByID(r.Context(), claims.UserID.String())
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "couldn't get user")
+			log.Println("Couldn't get user error: ", err)
 			return
 		}
 
 		if isAPIKeyExpired(user) {
-			RespondWithError(w, http.StatusUnauthorized, "api key expired")
+			log.Println("Api key expired error: ", err)
 			return
 		}
 
