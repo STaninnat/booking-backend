@@ -43,8 +43,8 @@ cp .env.example .env
 Run .sh file, but if it doesn't work, make sure to run chmod +x first.
 
 ```bash
+chmod +x ./scripts/run_all.sh
 ./scripts/run_all.sh
-chmod +x ./run_all.sh
 ```
 
 Run the server:
