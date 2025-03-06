@@ -9,7 +9,7 @@ curl -X POST "http://localhost:8080/v1/rooms" \
            "max_guests": 6
          }'
 
-echo "" # เพิ่มบรรทัดว่างให้อ่านง่ายขึ้น
+echo ""
 
 curl -X POST "http://localhost:8080/v1/rooms" \
      -H "Content-Type: application/json" \
@@ -19,7 +19,7 @@ curl -X POST "http://localhost:8080/v1/rooms" \
            "max_guests": 3
          }'
 
-echo "" # เพิ่มบรรทัดว่าง
+echo ""
 
 curl -X POST "http://localhost:8080/v1/rooms" \
      -H "Content-Type: application/json" \
@@ -29,4 +29,4 @@ curl -X POST "http://localhost:8080/v1/rooms" \
            "max_guests": 2
          }'
 
-echo "" # เพิ่มบรรทัดว่าง
+echo ""

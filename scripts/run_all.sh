@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# รันไฟล์ .sh ตามลำดับที่ต้องการ
+# Run all files
 echo "Running buildprod.sh..."
 bash ./script/buildprod.sh
 
