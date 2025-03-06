@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -20,7 +21,7 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		ApiKeyExpiresAt: newKeyExpiredAt,
 		ID:              user.ID,
 	}); err != nil {
-		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't update user and signout")
+		log.Println("Couldn't update user and signout error: ", err)
 		return
 	}
 
@@ -31,7 +32,7 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		RefreshTokenExpiresAt: newKeyExpiredAt,
 		UserID:                user.ID,
 	}); err != nil {
-		middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't update user key and signout")
+		log.Println("Couldn't update user key and signout error: ", err)
 		return
 	}
 
@@ -43,8 +44,8 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		// SameSite: http.SameSiteLaxMode,
+		// SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -55,8 +56,8 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		// SameSite: http.SameSiteLaxMode,
+		// SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	resp := map[string]string{

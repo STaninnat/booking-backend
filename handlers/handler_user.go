@@ -28,68 +28,69 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		params := parameters{}
 		if err := decoder.Decode(&params); err != nil {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "couldn't decode parameters")
+			log.Println("Decode error: ", err)
 			return
 		}
 
-		if params.UserName == "" || params.Password == "" {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "invalid input")
+		if params.FirstName == "" || params.LastName == "" || params.Email == "" || params.UserName == "" || params.Password == "" {
+			middlewares.RespondWithError(w, http.StatusBadRequest, "Invalid input")
 			return
 		}
 
 		if !security.IsValidUserNameFormat(params.UserName) {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "invalid username format")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "Invalid username format")
 			return
 		}
 		exists, err := cfg.DB.CheckUserExistsByUsername(r.Context(), params.UserName)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "error checking username")
+			log.Println("Checking username error: ", err)
 			return
 		}
 		if exists {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "username already exists")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "Username already exists")
 			return
 		}
 
 		if !security.IsValidateEmailFormat(params.Email) {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "invalid email format")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "Invalid email format")
 			return
 		}
+
 		exists, err = cfg.DB.CheckUserExistsByEmail(r.Context(), params.Email)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "error checking email")
+			log.Println("Checking email error: ", err)
 			return
 		}
 		if exists {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "an account with this email already exists")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "An account with this email already exists")
 			return
 		}
 
 		fullName := params.FirstName + " " + params.LastName
 		exists, err = cfg.DB.CheckUserExistsByFullname(r.Context(), fullName)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "error checking full name")
+			log.Println("Checking full name error: ", err)
 			return
 		}
 		if exists {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "an account with this name already exists")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "An account with this name already exists")
 			return
 		}
 
 		if len(params.Password) < 8 {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "password must be at least 8 ")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "Password must be at least 8 ")
 			return
 		}
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't hash password")
+			log.Println("Couldn't hash password error: ", err)
 			return
 		}
 
 		_, hashedApiKey, err := security.GenerateAndHashAPIKey()
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate apikey")
+			log.Println("Couldn't generate apikey error: ", err)
 			return
 		}
 
@@ -107,8 +108,8 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			ApiKeyExpiresAt: apiKeyExpiresAt,
 		})
 		if err != nil {
-			log.Printf("error while creating user: %v", err)
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't create user")
+			log.Printf("Error while creating user: %v\n", err)
+			middlewares.RespondWithError(w, http.StatusInternalServerError, "Couldn't create user")
 			return
 		}
 
@@ -116,28 +117,26 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 
 		user, err := cfg.DB.GetUserByKey(r.Context(), hashedApiKey)
 		if err != nil {
-			log.Printf("error while getting user: %v", err)
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't get user")
+			log.Printf("Error while getting user: %v\n", err)
 			return
 		}
 
 		userID, err := uuid.Parse(user.ID)
 		if err != nil {
-			log.Printf("error parsing user ID: %v", err)
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "invalid user ID")
+			log.Printf("Error parsing user ID: %v\n", err)
 			return
 		}
 
 		tokenString, err := security.GenerateJWTToken(userID, cfg.JWTSecret, jwtExpiresAt)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate access token")
+			log.Println("Couldn't generate access token error: ", err)
 			return
 		}
 
 		refreshExpiresAt := time.Now().Local().Add(30 * 24 * time.Hour)
 		refreshToken, err := security.GenerateJWTToken(userID, cfg.RefreshSecret, refreshExpiresAt)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate refresh token")
+			log.Println("Couldn't generate refresh token error: ", err)
 			return
 		}
 
@@ -151,7 +150,7 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			UserID:                user.ID,
 		})
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to create new refresh token")
+			log.Println("Failed to create new refresh token error: ", err)
 			return
 		}
 
@@ -162,8 +161,8 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			Secure:   true,
 			Path:     "/",
 			Expires:  jwtExpiresAt,
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -173,8 +172,8 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			Secure:   true,
 			Path:     "/",
 			Expires:  refreshExpiresAt,
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		userResp := map[string]string{

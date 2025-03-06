@@ -5,7 +5,8 @@ RETURNING *;
 
 -- name: GetAllRooms :many
 SELECT id, updated_at, room_name, description, price, max_guests
-FROM rooms;
+FROM rooms
+ORDER BY updated_at DESC;
 
 -- name: GetRoomByID :one
 SELECT id, updated_at, room_name, description, price, max_guests

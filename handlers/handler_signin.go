@@ -26,28 +26,23 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 		params := parameters{}
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&params); err != nil {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "couldn't decode parameters")
+			log.Println("Decode error: ", err)
 			return
 		}
 
 		user, err := cfg.DB.GetUserByUsername(r.Context(), params.UserName)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				middlewares.RespondWithError(w, http.StatusBadRequest, "username not found")
+				middlewares.RespondWithError(w, http.StatusBadRequest, "Username not found")
 			} else {
-				middlewares.RespondWithError(w, http.StatusInternalServerError, "error retrieving user")
+				log.Println("Retrieving user error: ", err)
 			}
 			return
 		}
 
 		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(params.Password))
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusBadRequest, "incorrect password")
-			return
-		}
-
-		if user.ApiKeyExpiresAt.Before(time.Now().Local()) {
-			middlewares.RespondWithError(w, http.StatusUnauthorized, "apikey expired")
+			middlewares.RespondWithError(w, http.StatusBadRequest, "Incorrect password")
 			return
 		}
 
@@ -55,38 +50,36 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 
 		userID, err := uuid.Parse(user.ID)
 		if err != nil {
-			log.Printf("error parsing user id: %v", err)
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "invalid user ID")
+			log.Printf("Error parsing user id: %v\n", err)
 			return
 		}
 
 		tokenString, err := security.GenerateJWTToken(userID, cfg.JWTSecret, jwtExpiresAt)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate access token")
+			log.Println("Couldn't generate access token error: ", err)
 			return
 		}
 
 		tx, err := cfg.DBConn.BeginTx(r.Context(), nil)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to start transaction")
+			log.Println("Failed to start transaction error: ", err)
 			return
 		}
 
 		defer func() {
 			if p := recover(); p != nil {
 				if err := tx.Rollback(); err != nil {
-					log.Printf("failed to rollback transaction: %v", err)
+					log.Printf("Failed to rollback transaction: %v\n", err)
 				}
 				panic(p)
 			} else if err != nil {
 				if err := tx.Rollback(); err != nil {
-					log.Printf("failed to rollback transaction: %v", err)
+					log.Printf("Failed to rollback transaction: %v\n", err)
 				}
 			} else {
 				err = tx.Commit()
 				if err != nil {
-					log.Printf("failed to commit transaction: %v", err)
-					middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to commit transaction")
+					log.Printf("Failed to commit transaction: %v\n", err)
 					return
 				}
 			}
@@ -96,7 +89,7 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 
 		_, hashedApiKey, err := security.GenerateAndHashAPIKey()
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate apikey")
+			log.Println("Couldn't generate apikey error: ", err)
 			return
 		}
 
@@ -109,13 +102,13 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			ID:              user.ID,
 		})
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to update new api key")
+			log.Println("Failed to update new apikey error: ", err)
 			return
 		}
 
 		refreshToken, err := security.GenerateJWTToken(userID, cfg.RefreshSecret, keyExpiresAt)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate refresh token")
+			log.Println("Couldn't generate refresh token error: ", err)
 			return
 		}
 
@@ -138,11 +131,11 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 					UserID:                user.ID,
 				})
 				if err != nil {
-					middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to create new refresh token")
+					log.Println("Failed to create new refresh token error: ", err)
 					return
 				}
 			} else {
-				middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to update new refresh token")
+				log.Println("Failed to update new refresh token error: ", err)
 				return
 			}
 		}
@@ -154,8 +147,8 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			HttpOnly: true,
 			Secure:   true,
 			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -165,8 +158,8 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			HttpOnly: true,
 			Secure:   true,
 			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		userResp := map[string]string{

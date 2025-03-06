@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -33,10 +34,15 @@ func (q *Queries) CheckRoomAvailability(ctx context.Context, arg CheckRoomAvaila
 	return id, err
 }
 
-const createBooking = `-- name: CreateBooking :one
-INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, check_in, check_out, user_id, room_id
+const createBooking = `-- name: CreateBooking :exec
+WITH inserted_booking AS (
+  INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
+  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  RETURNING id, user_id
+)
+UPDATE users
+SET phone = $8
+WHERE id = (SELECT user_id FROM inserted_booking)
 `
 
 type CreateBookingParams struct {
@@ -47,10 +53,11 @@ type CreateBookingParams struct {
 	CheckOut  time.Time
 	UserID    string
 	RoomID    string
+	Phone     sql.NullString
 }
 
-func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, createBooking,
+func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) error {
+	_, err := q.db.ExecContext(ctx, createBooking,
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -58,18 +65,9 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 		arg.CheckOut,
 		arg.UserID,
 		arg.RoomID,
+		arg.Phone,
 	)
-	var i Booking
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.CheckIn,
-		&i.CheckOut,
-		&i.UserID,
-		&i.RoomID,
-	)
-	return i, err
+	return err
 }
 
 const deleteBooking = `-- name: DeleteBooking :exec
@@ -80,6 +78,48 @@ WHERE id = $1
 func (q *Queries) DeleteBooking(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deleteBooking, id)
 	return err
+}
+
+const getAllBookings = `-- name: GetAllBookings :many
+SELECT b.id, b.check_in, b.check_out, r.room_name
+FROM bookings b
+JOIN rooms r ON b.room_id = r.id
+ORDER BY b.check_in ASC
+`
+
+type GetAllBookingsRow struct {
+	ID       string
+	CheckIn  time.Time
+	CheckOut time.Time
+	RoomName string
+}
+
+func (q *Queries) GetAllBookings(ctx context.Context) ([]GetAllBookingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllBookings)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllBookingsRow
+	for rows.Next() {
+		var i GetAllBookingsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CheckIn,
+			&i.CheckOut,
+			&i.RoomName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getBookedDatesByRoomID = `-- name: GetBookedDatesByRoomID :many
