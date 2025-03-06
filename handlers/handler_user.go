@@ -161,8 +161,8 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			Secure:   true,
 			Path:     "/",
 			Expires:  jwtExpiresAt,
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -172,8 +172,8 @@ func HandlerCreateUser(cfg *config.ApiConfig) http.HandlerFunc {
 			Secure:   true,
 			Path:     "/",
 			Expires:  refreshExpiresAt,
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		userResp := map[string]string{

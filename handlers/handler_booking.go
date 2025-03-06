@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/STaninnat/booking-backend/internal/config"
 	"github.com/STaninnat/booking-backend/internal/database"
-	"github.com/STaninnat/booking-backend/internal/models"
 	"github.com/STaninnat/booking-backend/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -21,6 +21,7 @@ func HandlerCreateBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.
 		CheckIn  string `json:"check_in"`
 		CheckOut string `json:"check_out"`
 		RoomID   string `json:"room_id"`
+		Phone    string `json:"phone"`
 	}
 
 	defer r.Body.Close()
@@ -31,14 +32,14 @@ func HandlerCreateBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.
 		return
 	}
 
-	layout := "2006-01-02 15:04:05"
-	checkInAt, err := time.Parse(layout, params.CheckIn+" 14:00:00")
+	layout := "2006-01-02"
+	checkInAt, err := time.Parse(layout, params.CheckIn)
 	if err != nil {
 		log.Println("Invalid check_in format error: ", err)
 		return
 	}
 
-	checkOutAt, err := time.Parse(layout, params.CheckOut+" 12:00:00")
+	checkOutAt, err := time.Parse(layout, params.CheckOut)
 	if err != nil {
 		log.Println("Invalid check_out format error: ", err)
 		return
@@ -55,10 +56,9 @@ func HandlerCreateBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.
 		CheckOut: checkInAt,
 	})
 
-	var booking_db database.Booking
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			booking_db, err = cfg.DB.CreateBooking(r.Context(), database.CreateBookingParams{
+			err = cfg.DB.CreateBooking(r.Context(), database.CreateBookingParams{
 				ID:        uuid.New().String(),
 				CreatedAt: time.Now().Local(),
 				UpdatedAt: time.Now().Local(),
@@ -66,13 +66,14 @@ func HandlerCreateBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.
 				CheckOut:  checkOutAt,
 				UserID:    user.ID,
 				RoomID:    params.RoomID,
+				Phone:     sql.NullString{String: params.Phone, Valid: params.Phone != ""},
 			})
 			if err != nil {
-				middlewares.RespondWithError(w, http.StatusInternalServerError, "Couldn't create booking")
+				log.Println("Couldn't create booking error: ", err)
 				return
 			}
 		} else {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
+			log.Println("Internal server error: ", err)
 			return
 		}
 	}
@@ -81,8 +82,13 @@ func HandlerCreateBooking(cfg *config.ApiConfig, w http.ResponseWriter, r *http.
 		middlewares.RespondWithError(w, http.StatusConflict, "Room is already booked")
 		return
 	}
+	fmt.Println("exists: ", exists)
 
-	middlewares.RespondWithJSON(w, http.StatusCreated, models.DBBookingToBooking(booking_db))
+	userResp := map[string]any{
+		"message": "Booking created successfully",
+	}
+
+	middlewares.RespondWithJSON(w, http.StatusCreated, userResp)
 }
 
 func HandlerGetBookingsByUserID(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {

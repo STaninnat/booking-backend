@@ -44,8 +44,8 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		// SameSite: http.SameSiteLaxMode,
+		// SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	http.SetCookie(w, &http.Cookie{
@@ -56,8 +56,8 @@ func HandlerSignout(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Reques
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		// SameSite: http.SameSiteLaxMode,
+		// SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	resp := map[string]string{

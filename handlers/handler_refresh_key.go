@@ -16,27 +16,26 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("refresh_token")
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusUnauthorized, "couldn't find token")
+			log.Println("Couldn't find token error:", err)
 			return
 		}
 		refreshToken := cookie.Value
 
 		user, err := cfg.DB.GetUserByRfKey(r.Context(), refreshToken)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't get user")
+			log.Println("Couldn't get user error:", err)
 			return
 		}
 
 		_, newHashedApiKey, err := security.GenerateAndHashAPIKey()
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate new key")
+			log.Println("Couldn't generate new key error:", err)
 			return
 		}
 
 		userID, err := uuid.Parse(user.UserID)
 		if err != nil {
-			log.Printf("error parsing user ID: %v", err)
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "invalid user ID")
+			log.Printf("Error parsing user ID: %v", err)
 			return
 		}
 
@@ -45,7 +44,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 
 		newAccessToken, err := security.GenerateJWTToken(userID, cfg.JWTSecret, newAccessTokenExpiresAt)
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "couldn't generate new token")
+			log.Println("Couldn't generate new token error:", err)
 			return
 		}
 
@@ -56,7 +55,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 			ID:              user.UserID,
 		})
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to update apikey")
+			log.Println("Failed to update apikey error:", err)
 			return
 		}
 
@@ -69,7 +68,7 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 			UserID:                user.UserID,
 		})
 		if err != nil {
-			middlewares.RespondWithError(w, http.StatusInternalServerError, "failed to update refresh token")
+			log.Println("Failed to update refresh token error:", err)
 			return
 		}
 
@@ -80,8 +79,8 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 			HttpOnly: true,
 			Path:     "/",
 			Secure:   true,
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -91,8 +90,8 @@ func HandlerRefreshKey(cfg *config.ApiConfig) http.HandlerFunc {
 			HttpOnly: true,
 			Path:     "/",
 			Secure:   true,
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		userResp := map[string]string{

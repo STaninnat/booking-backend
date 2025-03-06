@@ -23,13 +23,11 @@ func MiddlewareAuth(cfg *config.ApiConfig, handler authhandler) http.HandlerFunc
 
 		claims, err := security.ValidateJWTToken(tokenString.Value, cfg.JWTSecret)
 		if err != nil {
-			log.Printf("token validation error: %v\n", err)
 			if err == jwt.ErrTokenExpired {
 				log.Println("Token expired error: ", err)
 				return
 			}
-
-			RespondWithError(w, http.StatusUnauthorized, "invalid token")
+			log.Printf("Token validation error: %v\n", err)
 			return
 		}
 

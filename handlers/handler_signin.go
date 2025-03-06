@@ -46,11 +46,6 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			return
 		}
 
-		if user.ApiKeyExpiresAt.Before(time.Now().Local()) {
-			log.Println("Apikey expired error")
-			return
-		}
-
 		jwtExpiresAt := time.Now().Local().Add(1 * time.Hour)
 
 		userID, err := uuid.Parse(user.ID)
@@ -152,8 +147,8 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			HttpOnly: true,
 			Secure:   true,
 			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		http.SetCookie(w, &http.Cookie{
@@ -163,8 +158,8 @@ func HandlerSignin(cfg *config.ApiConfig) http.HandlerFunc {
 			HttpOnly: true,
 			Secure:   true,
 			Path:     "/",
-			SameSite: http.SameSiteStrictMode,
-			// SameSite: http.SameSiteLaxMode,
+			// SameSite: http.SameSiteStrictMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 
 		userResp := map[string]string{

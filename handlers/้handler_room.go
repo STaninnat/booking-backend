@@ -27,46 +27,48 @@ type BookedDate struct {
 	CheckOut time.Time `json:"check_out"`
 }
 
-func HandlerCreateRoom(cfg *config.ApiConfig, w http.ResponseWriter, r *http.Request, user database.User) {
-	type parameters struct {
-		RoomName    string  `json:"room_name"`
-		Description *string `json:"description"`
-		Price       float64 `json:"price"`
-		MaxGuests   int32   `json:"max_guests"`
-	}
+func HandlerCreateRoom(cfg *config.ApiConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		type parameters struct {
+			RoomName    string  `json:"room_name"`
+			Description *string `json:"description"`
+			Price       float64 `json:"price"`
+			MaxGuests   int32   `json:"max_guests"`
+		}
 
-	defer r.Body.Close()
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	if err := decoder.Decode(&params); err != nil {
-		log.Println("Decode error: ", err)
-		return
-	}
+		defer r.Body.Close()
+		decoder := json.NewDecoder(r.Body)
+		params := parameters{}
+		if err := decoder.Decode(&params); err != nil {
+			log.Println("Decode error: ", err)
+			return
+		}
 
-	description := sql.NullString{
-		String: "",
-		Valid:  false,
-	}
-	if params.Description != nil {
-		description.String = *params.Description
-		description.Valid = true
-	}
+		description := sql.NullString{
+			String: "",
+			Valid:  false,
+		}
+		if params.Description != nil {
+			description.String = *params.Description
+			description.Valid = true
+		}
 
-	room_db, err := cfg.DB.CreateRoom(r.Context(), database.CreateRoomParams{
-		ID:          uuid.New().String(),
-		CreatedAt:   time.Now().Local(),
-		UpdatedAt:   time.Now().Local(),
-		RoomName:    params.RoomName,
-		Description: description,
-		Price:       fmt.Sprintf("%.2f", params.Price),
-		MaxGuests:   int32(params.MaxGuests),
-	})
-	if err != nil {
-		middlewares.RespondWithError(w, http.StatusInternalServerError, "Couldn't create room")
-		return
-	}
+		room_db, err := cfg.DB.CreateRoom(r.Context(), database.CreateRoomParams{
+			ID:          uuid.New().String(),
+			CreatedAt:   time.Now().Local(),
+			UpdatedAt:   time.Now().Local(),
+			RoomName:    params.RoomName,
+			Description: description,
+			Price:       fmt.Sprintf("%.2f", params.Price),
+			MaxGuests:   int32(params.MaxGuests),
+		})
+		if err != nil {
+			middlewares.RespondWithError(w, http.StatusInternalServerError, "Couldn't create room")
+			return
+		}
 
-	middlewares.RespondWithJSON(w, http.StatusCreated, models.DBRoomToRoom(room_db))
+		middlewares.RespondWithJSON(w, http.StatusCreated, models.DBRoomToRoom(room_db))
+	}
 }
 
 func HandlerGetAllRooms(cfg *config.ApiConfig) http.HandlerFunc {

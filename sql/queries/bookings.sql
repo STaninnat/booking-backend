@@ -1,7 +1,12 @@
--- name: CreateBooking :one
-INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING *;
+-- name: CreateBooking :exec
+WITH inserted_booking AS (
+  INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
+  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  RETURNING id, user_id
+)
+UPDATE users
+SET phone = $8
+WHERE id = (SELECT user_id FROM inserted_booking);
 
 -- name: CheckRoomAvailability :one
 SELECT id FROM bookings

@@ -66,7 +66,7 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Use(middleware.Logger)
+	// router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
 	router.Use(cors.Handler(cors.Options{
@@ -83,12 +83,14 @@ func main() {
 		v1Router.Get("/healthz", handlers.HandlerReadiness)
 		v1Router.Get("/error", handlers.HandlerError)
 
+		v1Router.Get("/auth/check", middlewares.HandlerCheckAuth(&apicfg))
+
 		v1Router.Post("/user/signup", handlers.HandlerCreateUser(&apicfg))
 		v1Router.Post("/user/signin", handlers.HandlerSignin(&apicfg))
 		v1Router.Post("/user/signout", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerSignout))
 		v1Router.Post("/user/refresh-key", handlers.HandlerRefreshKey(&apicfg))
 
-		v1Router.Post("/rooms", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerCreateRoom))
+		v1Router.Post("/rooms", handlers.HandlerCreateRoom(&apicfg))
 		v1Router.Get("/rooms", handlers.HandlerGetAllRooms(&apicfg))
 		v1Router.Get("/rooms/{id}", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetRoom))
 		v1Router.Get("/rooms/{room_id}/calendar", middlewares.MiddlewareAuth(&apicfg, handlers.HandlerGetRoomCalendar))

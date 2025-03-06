@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -33,10 +34,15 @@ func (q *Queries) CheckRoomAvailability(ctx context.Context, arg CheckRoomAvaila
 	return id, err
 }
 
-const createBooking = `-- name: CreateBooking :one
-INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, check_in, check_out, user_id, room_id
+const createBooking = `-- name: CreateBooking :exec
+WITH inserted_booking AS (
+  INSERT INTO bookings (id, created_at, updated_at, check_in, check_out, user_id, room_id)
+  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  RETURNING id, user_id
+)
+UPDATE users
+SET phone = $8
+WHERE id = (SELECT user_id FROM inserted_booking)
 `
 
 type CreateBookingParams struct {
@@ -47,10 +53,11 @@ type CreateBookingParams struct {
 	CheckOut  time.Time
 	UserID    string
 	RoomID    string
+	Phone     sql.NullString
 }
 
-func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (Booking, error) {
-	row := q.db.QueryRowContext(ctx, createBooking,
+func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) error {
+	_, err := q.db.ExecContext(ctx, createBooking,
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -58,18 +65,9 @@ func (q *Queries) CreateBooking(ctx context.Context, arg CreateBookingParams) (B
 		arg.CheckOut,
 		arg.UserID,
 		arg.RoomID,
+		arg.Phone,
 	)
-	var i Booking
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.CheckIn,
-		&i.CheckOut,
-		&i.UserID,
-		&i.RoomID,
-	)
-	return i, err
+	return err
 }
 
 const deleteBooking = `-- name: DeleteBooking :exec
