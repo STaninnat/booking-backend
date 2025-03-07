@@ -1,6 +1,10 @@
 #!/bin/bash
 
-curl -X POST "http://localhost:8080/v1/rooms" \
+if [ -f .env ]; then
+    source .env
+fi
+
+curl -X POST "http://localhost:$PORT/v1/rooms" \
      -H "Content-Type: application/json" \
      -d '{
            "room_name": "Deluxe Room",
@@ -11,7 +15,7 @@ curl -X POST "http://localhost:8080/v1/rooms" \
 
 echo ""
 
-curl -X POST "http://localhost:8080/v1/rooms" \
+curl -X POST "http://localhost:$PORT/v1/rooms" \
      -H "Content-Type: application/json" \
      -d '{
            "room_name": "Middle Room",
@@ -21,7 +25,7 @@ curl -X POST "http://localhost:8080/v1/rooms" \
 
 echo ""
 
-curl -X POST "http://localhost:8080/v1/rooms" \
+curl -X POST "http://localhost:$PORT/v1/rooms" \
      -H "Content-Type: application/json" \
      -d '{
            "room_name": "Normal Room",
